@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>약점 보완 노트 · 작성</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+  :root{
+    --paper:#f6f4ee; --card:#fffdf8; --ink:#1c2536; --ink-soft:#5a6377;
+    --line:#e6e2d6; --line-soft:#efece2;
+    --open:#d2544a;  --open-bg:#fbe9e7;
+    --rev:#c77d2e;   --rev-bg:#fbf0dc;
+    --done:#16976a;  --done-bg:#e7f5ee;
+    --coach:#2f6fd6; --coach-bg:#eaf1fc;
+    --shadow:0 1px 2px rgba(28,37,54,.05),0 8px 24px rgba(28,37,54,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:92px}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px}
+  b{font-weight:800}
+
+  /* ── 시작 화면 ── */
+  #upload{min-height:90vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:18px;padding:24px}
+  .brand{font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);font-weight:800}
+  .lead{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.22}
+  .lead span{color:var(--open)}
+  .sub{color:var(--ink-soft);max-width:33ch;font-size:14.5px}
+  .drop{width:100%;max-width:420px;border:2px dashed var(--line);border-radius:20px;background:var(--card);padding:32px 24px;cursor:pointer;transition:.18s;box-shadow:var(--shadow)}
+  .drop:hover,.drop.over{border-color:var(--open);background:var(--open-bg)}
+  .drop .ic{font-size:32px}
+  .drop b{display:block;margin-top:10px;font-size:16px}
+  .drop small{color:var(--ink-soft)}
+  .orbtn{background:none;border:none;color:var(--ink-soft);font-size:14px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .err{color:var(--open);font-size:13.5px;min-height:18px;font-weight:700}
+  input[type=file]{display:none}
+
+  /* ── 메인 ── */
+  #app{display:none}
+  header.top{position:sticky;top:0;z-index:30;background:rgba(246,244,238,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top-row{display:flex;align-items:center;gap:12px;padding:11px 0 8px}
+  .who{flex:1;min-width:0}
+  .who .nm{font-weight:800;font-size:17px;letter-spacing:-.01em}
+  .who .wk{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .relo{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer}
+
+  .subjects{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+  .subjects::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s;white-space:nowrap}
+  .chip .cdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .chip .cnt{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  .chip.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip.sel .cnt{color:#c9cfda}
+  .chip.add{color:var(--ink-soft);border-style:dashed}
+
+  .filters{display:flex;align-items:center;gap:6px;padding:0 0 10px;overflow-x:auto;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .fchip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer}
+  .fchip.sel{color:#fff;border-color:transparent}
+  .fchip.sel[data-f="전체"]{background:var(--ink)}
+  .fchip.sel[data-f="미해결"]{background:var(--open)}
+  .fchip.sel[data-f="복습중"]{background:var(--rev)}
+  .fchip.sel[data-f="해결완료"]{background:var(--done)}
+  .fchip .n{opacity:.8}
+
+  main{padding-top:12px;min-height:40vh}
+  .cards{display:flex;flex-direction:column;gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 15px;cursor:pointer;transition:transform .08s,box-shadow .15s;box-shadow:var(--shadow)}
+  .card:active{transform:scale(.99)}
+  .card.done{opacity:.72}
+  .crow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+  .badge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;white-space:nowrap}
+  .st-open{color:var(--open);background:var(--open-bg)}
+  .st-rev{color:var(--rev);background:var(--rev-bg)}
+  .st-done{color:var(--done);background:var(--done-bg)}
+  .pri-high{color:var(--open);background:var(--open-bg)}
+  .pri-mid{color:var(--ink-soft);background:var(--line-soft)}
+  .pri-low{color:var(--ink-soft);background:var(--line-soft)}
+  .meta{margin-left:auto;font-size:11.5px;color:var(--ink-soft);font-weight:600;white-space:nowrap}
+  .meta .au-coach{color:var(--coach);font-weight:800}
+  .weak{font-size:15.5px;font-weight:700;letter-spacing:-.01em;line-height:1.4}
+  .card.done .weak{text-decoration:line-through;text-decoration-color:rgba(28,37,54,.35)}
+  .ref{font-size:12.5px;color:var(--ink-soft);margin-top:5px}
+  .sol,.fb{margin-top:9px;font-size:13.5px;line-height:1.5;border-left:3px solid var(--line);padding:2px 0 2px 10px}
+  .sol .lb,.fb .lb{display:block;font-size:11px;font-weight:800;letter-spacing:.02em;margin-bottom:1px}
+  .sol .lb{color:var(--ink-soft)}
+  .fb{border-left-color:var(--coach)}
+  .fb .lb{color:var(--coach)}
+  .fb.empty{border-left-style:dashed}
+  .fb.empty .tx{color:var(--ink-soft);font-style:italic}
+
+  .empty{background:var(--card);border:1px dashed var(--line);border-radius:15px;padding:30px 18px;text-align:center;color:var(--ink-soft);font-size:14px;line-height:1.6}
+
+  /* ── 하단 저장바 ── */
+  .savebar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,253,248,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:11px 16px;padding-bottom:max(11px,env(safe-area-inset-bottom))}
+  .savebar .inner{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .savebar .stat{flex:1;min-width:0}
+  .savebar .stat b{font-size:14.5px;font-weight:800}
+  .savebar .stat small{display:block;font-size:11.5px;color:var(--ink-soft)}
+  .btn-add{flex:0 0 auto;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:13px;padding:12px 15px;font-size:14.5px;font-weight:800;cursor:pointer}
+  .btn-add:active{transform:scale(.97)}
+  .save{flex:0 0 auto;background:var(--ink);color:#fff;border:none;border-radius:13px;padding:13px 18px;font-size:15px;font-weight:800;cursor:pointer;transition:.15s}
+  .save:active{transform:scale(.97)}
+  .save:disabled{opacity:.45}
+
+  /* ── 모달(작성/수정) ── */
+  .sheet{position:fixed;inset:0;z-index:60;display:none}
+  .sheet.open{display:block}
+  .sheet .scrim{position:absolute;inset:0;background:rgba(28,37,54,.4)}
+  .sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:94vh;overflow-y:auto;background:var(--paper);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(28,37,54,.18);animation:up .22s ease}
+  @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .panel .inner{max-width:640px;margin:0 auto;padding:16px 16px 22px}
+  .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 12px}
+  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .ph h3{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em}
+  .xbtn{border:none;background:none;font-size:15px;color:var(--ink-soft);font-weight:700;cursor:pointer;padding:6px}
+  .field{margin-bottom:14px}
+  .field>label{display:block;font-size:12.5px;font-weight:800;color:var(--ink-soft);margin-bottom:6px}
+  .field .req{color:var(--open)}
+  .field input[type=text],.field input[type=date],.field textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 13px;font-size:15px;font-family:inherit;color:var(--ink);resize:vertical}
+  .field textarea{min-height:64px;line-height:1.5}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--ink)}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:11px;padding:11px 6px;font-size:14px;font-weight:700;color:var(--ink-soft);cursor:pointer;transition:.12s}
+  .seg button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .seg.stat button.on[data-v="미해결"]{background:var(--open);border-color:var(--open)}
+  .seg.stat button.on[data-v="복습중"]{background:var(--rev);border-color:var(--rev)}
+  .seg.stat button.on[data-v="해결완료"]{background:var(--done);border-color:var(--done)}
+  .seg.au button.on[data-v="코치"]{background:var(--coach);border-color:var(--coach)}
+  .hintline{font-size:11.5px;color:var(--ink-soft);margin-top:5px}
+  .ferr{color:var(--open);font-size:12.5px;font-weight:700;min-height:16px;margin-top:2px}
+  .prow{display:flex;gap:10px;margin-top:6px}
+  .prow .save{flex:1;justify-content:center}
+  .del{border:1px solid var(--open-bg);background:var(--open-bg);color:var(--open);border-radius:13px;padding:13px 15px;font-size:14.5px;font-weight:800;cursor:pointer}
+  datalist{color:var(--ink)}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.3s;z-index:80;box-shadow:var(--shadow);pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- 시작 화면 -->
+<section id="upload" class="wrap">
+  <div class="brand">약점 보완 노트</div>
+  <div class="lead">시험 직전, <span>약점만</span><br>빠르게 훑고 들어가기</div>
+  <div class="sub">마스터 엑셀을 올리면 과목별 약점을 바로 확인·추가할 수 있어요. 다 쓰면 같은 엑셀에 정리되어 다시 저장됩니다.</div>
+  <label class="drop" id="drop">
+    <div class="ic">📓</div>
+    <b>마스터 엑셀 올리기</b>
+    <small>약점보완노트_마스터.xlsx</small>
+    <input type="file" id="file" accept=".xlsx">
+  </label>
+  <button class="orbtn" id="fresh">엑셀 없이 새로 시작하기</button>
+  <div class="err" id="err"></div>
+</section>
+
+<!-- 메인 -->
+<section id="app">
+  <header class="top">
+    <div class="wrap">
+      <div class="top-row">
+        <div class="who">
+          <div class="nm">약점 보완 노트</div>
+          <div class="wk" id="who-wk"></div>
+        </div>
+        <button class="relo" id="relo">다른 파일</button>
+      </div>
+      <div class="subjects" id="subjects"></div>
+      <div class="filters" id="filters"></div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="cards" id="cards"></div>
+  </main>
+</section>
+
+<!-- 하단 저장바 -->
+<div class="savebar" id="savebar" style="display:none">
+  <div class="inner">
+    <div class="stat"><b id="sv-line">약점 0건</b><small id="sv-sub">엑셀로 저장하면 마스터 파일에 정리돼요</small></div>
+    <button class="btn-add" id="addbtn">＋ 약점</button>
+    <button class="save" id="save">엑셀로 저장</button>
+  </div>
+</div>
+
+<!-- 작성/수정 모달 -->
+<div class="sheet" id="sheet">
+  <div class="scrim" id="scrim"></div>
+  <div class="panel"><div class="inner">
+    <div class="grab"></div>
+    <div class="ph"><h3 id="ph-title">약점 추가</h3><button class="xbtn" id="close">닫기</button></div>
+
+    <div class="field" id="f-subject">
+      <label>과목</label>
+      <input type="text" id="in-subject" list="subjlist" placeholder="예: 국어 (새 과목명을 적으면 새로 만들어져요)">
+      <datalist id="subjlist"></datalist>
+    </div>
+
+    <div class="field">
+      <label>작성자</label>
+      <div class="seg au" id="seg-author"></div>
+    </div>
+
+    <div class="field">
+      <label>약점 <span class="req">*</span></label>
+      <textarea id="in-weak" placeholder="무엇이 약한지 구체적으로 (예: 비문학 지문에서 문단 간 논리 관계 파악이 느림)"></textarea>
+      <div class="ferr" id="weak-err"></div>
+    </div>
+
+    <div class="field">
+      <label>관련 문제 <span style="color:var(--ink-soft);font-weight:600">(선택)</span></label>
+      <input type="text" id="in-ref" placeholder="틀린 문제 번호·출처 등 (예: 6월 모평 34~37번)">
+    </div>
+
+    <div class="field">
+      <label>나의 해결 방안</label>
+      <textarea id="in-mysol" placeholder="스스로 세운 보완 방법"></textarea>
+    </div>
+
+    <div class="field">
+      <label>코치 피드백 · 추가 해결 방안</label>
+      <textarea id="in-coach" placeholder="코치가 확인 후 보태는 방법"></textarea>
+    </div>
+
+    <div class="field">
+      <label>중요도</label>
+      <div class="seg pri" id="seg-priority"></div>
+    </div>
+
+    <div class="field">
+      <label>상태</label>
+      <div class="seg stat" id="seg-status"></div>
+      <div class="hintline">미해결 → 복습중 → 해결완료 로 바꿔가며 해결 과정을 남겨요.</div>
+    </div>
+
+    <div class="field">
+      <label>등록일</label>
+      <input type="date" id="in-date">
+    </div>
+
+    <div class="prow">
+      <button class="del" id="del" style="display:none">삭제</button>
+      <button class="save" id="submit">저장</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── 스키마 (마스터 엑셀과 동일) ── */
+const HEADERS=["No.","등록일","작성자","중요도","약점","관련 문제 (선택)","나의 해결 방안","코치 피드백 · 추가 해결 방안","상태"];
+const WIDTHS=[5,12,8,8,34,22,30,30,10];
+const AUTHORS=["학생","코치"], PRIORITY=["높음","보통","낮음"], STATUS=["미해결","복습중","해결완료"];
+const GUIDE_SHEET="사용안내";
+const HEADER_ROW=3, DATA_START=4;
+// 열 인덱스(1-base)
+const C_DATE=2,C_AUTHOR=3,C_PRI=4,C_WEAK=5,C_REF=6,C_MYSOL=7,C_COACH=8,C_STATUS=9;
+
+/* ── 색 ── */
+const INK="1C2536", WHITE="FFFFFF", LINE="E6E2D6", CARD="FFFDF8", SUBHEAD="5A6377";
+const KNOWN={ "국어":"C0554B", "영어":"2F6FD6", "수학":"16976A" };
+const PALETTE=["C0554B","2F6FD6","16976A","7A5CC0","C77D2E","0E8A8A","B3477F","3E7D3A"];
+const STATUS_STYLE={
+  "해결완료":{bg:"E7F5EE", fg:"16976A", bold:true},
+  "복습중":  {bg:"FBF0DC", fg:"9A6A16", bold:false},
+  "미해결":  {bg:"FBE9E7", fg:"C0554B", bold:true},
+};
+const argb=h=>"FF"+h;
+
+/* ── 상태 ── */
+let WB=null, FILENAME="약점보완노트_마스터.xlsx";
+let SUBJECTS=[];              // [{name, color, entries:[{...}]}]
+let SEL=0, FILTER="전체", DIRTY=false;
+let EDIT=null;               // 수정 중 항목 {subIdx, entryIdx} 또는 null(추가)
+
+const $=id=>document.getElementById(id);
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+
+function txt(c){
+  if(c==null) return "";
+  if(c instanceof Date){ return c.getFullYear()+"-"+String(c.getMonth()+1).padStart(2,"0")+"-"+String(c.getDate()).padStart(2,"0"); }
+  if(typeof c==="object"){
+    if("result"in c) return txt(c.result);
+    if("text"in c) return String(c.text??"");
+    if("richText"in c) return c.richText.map(r=>r.text).join("");
+    if("hyperlink"in c) return String(c.text??c.hyperlink??"");
+    return "";
+  }
+  return String(c);
+}
+function colorFor(name, idx){ return KNOWN[name] || PALETTE[idx % PALETTE.length]; }
+
+/* ── 파일 입력 ── */
+$("file").addEventListener("change",e=>{ if(e.target.files[0]) load(e.target.files[0]); });
+const drop=$("drop");
+["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) load(f); });
+$("fresh").addEventListener("click",startFresh);
+$("relo").addEventListener("click",()=>{ location.reload(); });
+
+async function load(file){
+  try{ await loadBuffer(await file.arrayBuffer(), file.name); }
+  catch(err){ console.error(err); $("err").textContent="파일을 여는 중 문제가 생겼어요. 마스터 .xlsx 파일이 맞는지 확인해 주세요."; }
+}
+async function loadBuffer(buf, name){
+  $("err").textContent="";
+  if(!window.ExcelJS){ $("err").textContent="엑셀 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침 해주세요."; return; }
+  FILENAME=name||"약점보완노트_마스터.xlsx";
+  WB=new ExcelJS.Workbook();
+  await WB.xlsx.load(buf);
+  SUBJECTS=readModel(WB);
+  SEL=0; FILTER="전체"; DIRTY=false;
+  boot();
+}
+function startFresh(){
+  WB=null; FILENAME="약점보완노트_마스터.xlsx";
+  SUBJECTS=[]; SEL=0; FILTER="전체"; DIRTY=false;
+  boot();
+  openEditor(null, true);   // 바로 과목/약점 추가 유도
+}
+
+/* ── 엑셀 → 모델 ── */
+function readModel(wb){
+  const subs=[]; let idx=0;
+  wb.eachSheet(ws=>{
+    if(ws.name===GUIDE_SHEET) return;
+    const entries=[];
+    const last=ws.rowCount||DATA_START;
+    for(let r=DATA_START;r<=last;r++){
+      const weak=txt(ws.getCell(r,C_WEAK).value).trim();
+      if(!weak) continue;
+      entries.push({
+        date:   txt(ws.getCell(r,C_DATE).value).trim(),
+        author: norm(txt(ws.getCell(r,C_AUTHOR).value), AUTHORS, "학생"),
+        pri:    norm(txt(ws.getCell(r,C_PRI).value), PRIORITY, "보통"),
+        weak,
+        ref:    txt(ws.getCell(r,C_REF).value).trim(),
+        mysol:  txt(ws.getCell(r,C_MYSOL).value).trim(),
+        coach:  txt(ws.getCell(r,C_COACH).value).trim(),
+        status: norm(txt(ws.getCell(r,C_STATUS).value), STATUS, "미해결"),
+      });
+    }
+    subs.push({ name:ws.name, color:colorFor(ws.name, idx), entries });
+    idx++;
+  });
+  return subs;
+}
+function norm(v, list, def){ v=(v||"").trim(); return list.includes(v)?v:def; }
+
+/* ── 렌더 ── */
+function boot(){
+  $("upload").style.display="none"; $("app").style.display="block"; $("savebar").style.display="block";
+  $("who-wk").textContent=FILENAME;
+  buildSegments();
+  renderSubjects(); renderFilters(); renderCards(); refreshBar();
+  $("addbtn").onclick=()=>openEditor(null,false);
+  $("save").onclick=doSave;
+  $("close").onclick=closeEditor; $("scrim").onclick=closeEditor;
+  $("submit").onclick=submitEditor; $("del").onclick=deleteEntry;
+}
+
+function renderSubjects(){
+  const box=$("subjects"); box.innerHTML="";
+  SUBJECTS.forEach((s,i)=>{
+    const el=document.createElement("div");
+    el.className="chip"+(i===SEL?" sel":"");
+    el.innerHTML=`<span class="cdot" style="background:#${s.color}"></span>${esc(s.name)}<span class="cnt">${s.entries.length}</span>`;
+    el.onclick=()=>{ SEL=i; renderSubjects(); renderFilters(); renderCards(); window.scrollTo({top:0,behavior:"smooth"}); };
+    box.appendChild(el);
+  });
+  const add=document.createElement("div");
+  add.className="chip add"; add.textContent="＋ 과목";
+  add.onclick=()=>openEditor(null,true);
+  box.appendChild(add);
+}
+
+function curSub(){ return SUBJECTS[SEL]; }
+
+function renderFilters(){
+  const box=$("filters"); box.innerHTML="";
+  const s=curSub(); if(!s){ return; }
+  const counts={ "전체":s.entries.length };
+  STATUS.forEach(st=> counts[st]=s.entries.filter(e=>e.status===st).length );
+  ["전체",...STATUS].forEach(f=>{
+    const el=document.createElement("button");
+    el.className="fchip"+(f===FILTER?" sel":""); el.dataset.f=f;
+    el.innerHTML=`${f} <span class="n">${counts[f]||0}</span>`;
+    el.onclick=()=>{ FILTER=f; renderFilters(); renderCards(); };
+    box.appendChild(el);
+  });
+}
+
+const STATUS_RANK={ "미해결":0, "복습중":1, "해결완료":2 };
+const PRI_RANK={ "높음":0, "보통":1, "낮음":2 };
+function sortedEntries(s){
+  return s.entries.map((e,i)=>({e,i})).sort((a,b)=>{
+    const sa=STATUS_RANK[a.e.status]-STATUS_RANK[b.e.status]; if(sa) return sa;
+    const pa=PRI_RANK[a.e.pri]-PRI_RANK[b.e.pri]; if(pa) return pa;
+    return 0;
+  });
+}
+
+function renderCards(){
+  const host=$("cards"); host.innerHTML="";
+  const s=curSub();
+  if(!s){ host.innerHTML='<div class="empty">아직 과목이 없어요.<br>아래 <b>＋ 약점</b> 또는 위 <b>＋ 과목</b>으로 시작해 보세요.</div>'; return; }
+  let list=sortedEntries(s);
+  if(FILTER!=="전체") list=list.filter(x=>x.e.status===FILTER);
+  if(!list.length){
+    host.innerHTML=`<div class="empty">${FILTER==="전체"?"이 과목엔 아직 약점이 없어요.<br>아래 <b>＋ 약점</b>으로 추가해 보세요.":`'${FILTER}' 상태의 약점이 없어요.`}</div>`;
+    return;
+  }
+  list.forEach(({e,i})=>host.appendChild(cardEl(e,i)));
+}
+
+function stClass(st){ return st==="해결완료"?"st-done":st==="복습중"?"st-rev":"st-open"; }
+function priClass(p){ return p==="높음"?"pri-high":p==="보통"?"pri-mid":"pri-low"; }
+
+function cardEl(e, entryIdx){
+  const el=document.createElement("div");
+  el.className="card"+(e.status==="해결완료"?" done":"");
+  const priBadge = e.pri==="높음" ? `<span class="badge pri-high">중요 높음</span>` : (e.pri==="낮음"?`<span class="badge pri-low">낮음</span>`:"");
+  const auClass = e.author==="코치" ? "au-coach" : "";
+  el.innerHTML=`
+    <div class="crow">
+      <span class="badge ${stClass(e.status)}">${e.status}</span>
+      ${priBadge}
+      <span class="meta"><span class="${auClass}">${esc(e.author)}</span>${e.date?" · "+esc(e.date.slice(5)):""}</span>
+    </div>
+    <div class="weak">${esc(e.weak)}</div>
+    ${e.ref?`<div class="ref">📎 ${esc(e.ref)}</div>`:""}
+    ${e.mysol?`<div class="sol"><span class="lb">나의 해결 방안</span><span class="tx">${esc(e.mysol)}</span></div>`:""}
+    <div class="fb${e.coach?"":" empty"}"><span class="lb">코치 피드백</span><span class="tx">${e.coach?esc(e.coach):"코치가 확인 후 추가 방안을 적어줄 거예요."}</span></div>`;
+  el.onclick=()=>openEditor({subIdx:SEL, entryIdx}, false);
+  return el;
+}
+
+/* ── 세그먼트 컨트롤 ── */
+function buildSegments(){
+  seg($("seg-author"), AUTHORS, "au");
+  seg($("seg-priority"), PRIORITY, "pri");
+  seg($("seg-status"), STATUS, "stat");
+}
+function seg(box, values){
+  box.innerHTML="";
+  values.forEach(v=>{
+    const b=document.createElement("button");
+    b.type="button"; b.dataset.v=v; b.textContent=v;
+    b.onclick=()=>{ [...box.children].forEach(c=>c.classList.remove("on")); b.classList.add("on"); };
+    box.appendChild(b);
+  });
+}
+function segGet(box){ const on=box.querySelector(".on"); return on?on.dataset.v:null; }
+function segSet(box, val){ [...box.children].forEach(c=>c.classList.toggle("on", c.dataset.v===val)); }
+
+/* ── 모달 ── */
+function openEditor(target, askSubject){
+  EDIT=target;
+  const editing = !!target;
+  $("ph-title").textContent = editing ? "약점 수정" : "약점 추가";
+  $("del").style.display = editing ? "block" : "none";
+  $("weak-err").textContent="";
+
+  // 과목 datalist
+  const dl=$("subjlist"); dl.innerHTML="";
+  SUBJECTS.forEach(s=>{ const o=document.createElement("option"); o.value=s.name; dl.appendChild(o); });
+
+  let e;
+  if(editing){
+    e=SUBJECTS[target.subIdx].entries[target.entryIdx];
+    $("f-subject").style.display="none";       // 수정 시 과목 이동은 막음(단순화)
+  }else{
+    e={date:todayStr(),author:"학생",pri:"보통",weak:"",ref:"",mysol:"",coach:"",status:"미해결"};
+    $("f-subject").style.display="block";
+    $("in-subject").value = (askSubject && !curSub()) ? "" : (curSub()?curSub().name:"");
+  }
+  $("in-weak").value=e.weak; $("in-ref").value=e.ref;
+  $("in-mysol").value=e.mysol; $("in-coach").value=e.coach;
+  $("in-date").value=/^\d{4}-\d{2}-\d{2}$/.test(e.date)?e.date:todayStr();
+  segSet($("seg-author"), e.author);
+  segSet($("seg-priority"), e.pri);
+  segSet($("seg-status"), e.status);
+
+  $("sheet").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closeEditor(){ $("sheet").classList.remove("open"); document.body.style.overflow=""; }
+
+function submitEditor(){
+  const weak=$("in-weak").value.trim();
+  if(!weak){ $("weak-err").textContent="약점 내용을 입력해 주세요."; $("in-weak").focus(); return; }
+  const data={
+    date: $("in-date").value || todayStr(),
+    author: segGet($("seg-author"))||"학생",
+    pri: segGet($("seg-priority"))||"보통",
+    weak,
+    ref: $("in-ref").value.trim(),
+    mysol: $("in-mysol").value.trim(),
+    coach: $("in-coach").value.trim(),
+    status: segGet($("seg-status"))||"미해결",
+  };
+
+  if(EDIT){
+    SUBJECTS[EDIT.subIdx].entries[EDIT.entryIdx]=data;
+    SEL=EDIT.subIdx;
+  }else{
+    let name=$("in-subject").value.trim();
+    if(!name){ name = curSub()?curSub().name:"기타"; }
+    let si=SUBJECTS.findIndex(s=>s.name===name);
+    if(si<0){
+      SUBJECTS.push({ name, color:colorFor(name, SUBJECTS.length), entries:[] });
+      si=SUBJECTS.length-1;
+    }
+    SUBJECTS[si].entries.push(data);
+    SEL=si;
+  }
+  DIRTY=true;
+  closeEditor();
+  renderSubjects(); renderFilters(); renderCards(); refreshBar();
+  toast(EDIT?"수정했어요":"추가했어요");
+}
+function deleteEntry(){
+  if(!EDIT) return;
+  SUBJECTS[EDIT.subIdx].entries.splice(EDIT.entryIdx,1);
+  DIRTY=true; closeEditor();
+  renderSubjects(); renderFilters(); renderCards(); refreshBar();
+  toast("삭제했어요");
+}
+
+function refreshBar(){
+  const total=SUBJECTS.reduce((a,s)=>a+s.entries.length,0);
+  const open=SUBJECTS.reduce((a,s)=>a+s.entries.filter(e=>e.status==="미해결").length,0);
+  const done=SUBJECTS.reduce((a,s)=>a+s.entries.filter(e=>e.status==="해결완료").length,0);
+  $("sv-line").textContent=`약점 ${total}건 · 미해결 ${open} · 해결완료 ${done}`;
+  $("sv-sub").textContent=DIRTY?"저장되지 않은 변경이 있어요":"엑셀로 저장하면 마스터 파일에 정리돼요";
+  $("save").disabled=false;
+}
+
+/* ── 모델 → 엑셀 저장 ── */
+function styleNewSheet(ws, subject, color){
+  ws.columns = WIDTHS.map(w=>({width:w}));
+  const lastCol=String.fromCharCode(64+HEADERS.length); // 'I'
+  // 1행 타이틀
+  ws.mergeCells(`A1:${lastCol}1`);
+  const t=ws.getCell("A1");
+  t.value=`  ${subject}  약점 보완 노트`;
+  t.font={name:"Arial",size:15,bold:true,color:{argb:argb(WHITE)}};
+  t.fill={type:"pattern",pattern:"solid",fgColor:{argb:argb(color)}};
+  t.alignment={horizontal:"left",vertical:"middle"};
+  ws.getRow(1).height=34;
+  // 2행 안내
+  ws.mergeCells(`A2:${lastCol}2`);
+  const g=ws.getCell("A2");
+  g.value="시험 직전 쉬는 시간에 '미해결·중요도 높음'부터 훑어보세요.  학생이 약점·해결 방안을 적으면 코치가 피드백 열에 추가 방안을 더합니다.";
+  g.font={name:"Arial",size:9,italic:true,color:{argb:argb(SUBHEAD)}};
+  g.fill={type:"pattern",pattern:"solid",fgColor:{argb:argb(CARD)}};
+  g.alignment={horizontal:"left",vertical:"middle"};
+  ws.getRow(2).height=20;
+  // 3행 헤더
+  HEADERS.forEach((h,i)=>{
+    const c=ws.getCell(HEADER_ROW, i+1);
+    c.value=h;
+    c.font={name:"Arial",size:10.5,bold:true,color:{argb:argb(WHITE)}};
+    c.fill={type:"pattern",pattern:"solid",fgColor:{argb:argb(INK)}};
+    c.alignment={horizontal:"center",vertical:"middle",wrapText:true};
+    c.border=allBorder();
+  });
+  ws.getRow(HEADER_ROW).height=30;
+  ws.views=[{state:"frozen",ySplit:HEADER_ROW,showGridLines:false,topLeftCell:"A"+DATA_START}];
+}
+function allBorder(){ const s={style:"thin",color:{argb:argb(LINE)}}; return {top:s,left:s,right:s,bottom:s}; }
+
+function formatDataRow(ws, r){
+  ws.getRow(r).height=42;
+  for(let c=1;c<=HEADERS.length;c++){
+    const cell=ws.getCell(r,c);
+    cell.font={name:"Arial",size:10,color:{argb:argb(INK)}};
+    cell.border=allBorder();
+    const wrap = (c>=C_WEAK && c<=C_COACH); // 약점·관련문제·해결·피드백
+    cell.alignment={horizontal:wrap?"left":"center",vertical:wrap?"top":"middle",wrapText:wrap};
+  }
+  // No. 자동 수식
+  // (값은 아래 writeEntry에서 result 지정)
+  // 드롭다운
+  ws.getCell(r,C_AUTHOR).dataValidation={type:"list",allowBlank:true,formulae:['"'+AUTHORS.join(",")+'"']};
+  ws.getCell(r,C_PRI).dataValidation   ={type:"list",allowBlank:true,formulae:['"'+PRIORITY.join(",")+'"']};
+  ws.getCell(r,C_STATUS).dataValidation={type:"list",allowBlank:true,formulae:['"'+STATUS.join(",")+'"']};
+}
+function clearDataRow(ws, r){
+  for(let c=2;c<=HEADERS.length;c++){
+    const cell=ws.getCell(r,c);
+    cell.value=null;
+    cell.fill={type:"pattern",pattern:"none"};
+  }
+  ws.getCell(r,1).value=null;
+}
+function prefillEmptyRow(ws, r){
+  // 엑셀에서 코치가 직접 타이핑할 수 있도록 빈 행에 서식·드롭다운·자동번호를 미리 깔아둠
+  formatDataRow(ws, r);
+  ws.getCell(r,1).value={formula:`IF(E${r}="","",COUNTA($E$4:E${r}))`};
+}
+function writeEntry(ws, r, e, idx){
+  formatDataRow(ws, r);
+  ws.getCell(r,1).value={formula:`IF(E${r}="","",COUNTA($E$4:E${r}))`, result:idx};
+  ws.getCell(r,C_DATE).value=e.date||"";
+  ws.getCell(r,C_AUTHOR).value=e.author||"";
+  ws.getCell(r,C_PRI).value=e.pri||"";
+  ws.getCell(r,C_WEAK).value=e.weak||"";
+  ws.getCell(r,C_REF).value=e.ref||null;
+  ws.getCell(r,C_MYSOL).value=e.mysol||null;
+  ws.getCell(r,C_COACH).value=e.coach||null;
+  ws.getCell(r,C_STATUS).value=e.status||"";
+  // 상태 직접 채색(조건부서식과 무관하게 항상 유지)
+  const ss=STATUS_STYLE[e.status];
+  if(ss){
+    const sc=ws.getCell(r,C_STATUS);
+    sc.fill={type:"pattern",pattern:"solid",fgColor:{argb:argb(ss.bg)}};
+    sc.font={name:"Arial",size:10,bold:ss.bold,color:{argb:argb(ss.fg)}};
+    sc.alignment={horizontal:"center",vertical:"middle"};
+  }
+  // 중요도 높음 강조
+  if(e.pri==="높음"){
+    ws.getCell(r,C_PRI).font={name:"Arial",size:10,bold:true,color:{argb:argb("C0554B")}};
+  }
+}
+
+async function doSave(){
+  const btn=$("save"); btn.disabled=true; btn.textContent="저장 중…";
+  try{
+    if(!WB){ WB=new ExcelJS.Workbook(); buildGuideSheet(WB); }
+    SUBJECTS.forEach(s=>{
+      let ws=WB.getWorksheet(s.name);
+      if(!ws){ ws=WB.addWorksheet(s.name); styleNewSheet(ws, s.name, s.color); }
+      // 데이터 영역 비우기 (기존 잔여 행 제거)
+      const clearTo=Math.max(203, DATA_START + s.entries.length + 5, (ws.rowCount||DATA_START));
+      for(let r=DATA_START;r<=clearTo;r++) clearDataRow(ws, r);
+      // 항목 기록
+      s.entries.forEach((e,i)=> writeEntry(ws, DATA_START+i, e, i+1));
+      // 항목 아래 여유 행(엑셀 직접 입력용) 서식 준비
+      const tail=DATA_START+s.entries.length;
+      for(let r=tail;r<tail+30;r++) prefillEmptyRow(ws, r);
+    });
+    const buf=await WB.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const name=FILENAME.replace(/\.xlsx$/i,"")+".xlsx";
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    DIRTY=false; refreshBar();
+    toast("저장했어요 · "+name);
+  }catch(err){ console.error(err); toast("저장 실패 — 다시 시도해 주세요"); }
+  btn.disabled=false; btn.textContent="엑셀로 저장";
+}
+
+function buildGuideSheet(wb){
+  const ws=wb.addWorksheet(GUIDE_SHEET);
+  ws.views=[{showGridLines:false}];
+  ws.getColumn(1).width=2; ws.getColumn(2).width=92;
+  const lines=[
+    ["h","약점 보완 노트"],
+    ["p","시트 하나 = 과목 하나입니다. 시험 직전엔 '미해결·중요도 높음'부터 훑어보세요."],
+    ["p","작성은 함께 제공된 '약점보완노트_작성.html'을 휴대폰/PC에서 열어 진행하면 편리합니다."],
+    ["p","학생이 약점·해결 방안을 적고, 코치가 피드백 열과 상태를 채웁니다."],
+  ];
+  ws.getCell("B2").value=lines[0][1];
+  ws.getCell("B2").font={name:"Arial",size:16,bold:true,color:{argb:argb(INK)}};
+  let r=4;
+  lines.slice(1).forEach(([,tx])=>{
+    const c=ws.getCell(r,2); c.value=tx;
+    c.font={name:"Arial",size:11,color:{argb:argb("333A48")}};
+    c.alignment={vertical:"middle",wrapText:true};
+    ws.getRow(r).height=20; r++;
+  });
+}
+
+/* ── 유틸 ── */
+function esc(s){ return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+let toastT;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2400); }
+</script>
+</body>
+</html>
